@@ -35,7 +35,7 @@ MVP uses an **admin-operated** model: only one admin can create/manage polls. Th
 - Let anyone with the public share link vote without logging in.
 - Prevent accidental duplicate counting from the same browser/session where the `mini-poll-id` voter cookie is present (idempotent duplicate handling).
 - Hide results before voting on open polls; show accurate results after a valid vote and for closed polls.
-- Enforce poll expiry server-side using `APP_TIMEZONE` and a clear end-of-day boundary.
+- Enforce poll expiry server-side using `APP_TIMEZONE` = **Asia/Kolkata (IST)** and a clear end-of-day boundary.
 - Ship a clean, responsive public UI (Next.js) and a secure admin dashboard (Filament).
 
 ### Non-Goals (MVP)
@@ -105,11 +105,11 @@ As the admin, I want to create a poll with a question and 2–6 options.
 As the admin, I want to optionally set a poll to expire at the end of a chosen calendar date.
 - Acceptance:
   - Admin can choose **No expiry** (default) or a specific calendar date.
-  - If a date is selected, expiry is interpreted in `APP_TIMEZONE`.
-  - The system stores canonical `expires_at` representing `YYYY-MM-DD@23:59:59` in `APP_TIMEZONE` (recommended: also persisted/comparable as UTC instant) and enforces it server-side.
+  - If a date is selected, expiry is interpreted in `APP_TIMEZONE` = **Asia/Kolkata (IST)** — confirmed by CTO, 2026-11-09.
+  - The system stores canonical `expires_at` representing `YYYY-MM-DD@23:59:59` **IST** (recommended: also persisted/comparable as UTC instant) and enforces it server-side.
   - New votes are rejected when current server time is after `expires_at`.
   - After expiry, poll state is **Closed** (expired); no new votes accepted; results remain viewable.
-  - Public poll page and admin view display the expiry date/time and timezone clearly.
+  - Public poll page and admin view display the expiry date/time in **IST** clearly.
 
 ## Epic 3 — Public Voting (No Login)
 
@@ -136,7 +136,7 @@ As a voter (after voting) or any viewer of a closed poll, I want to see current 
 - Acceptance:
   - Results show each option with vote count, percentage, and a visual bar.
   - Total vote count is displayed.
-  - Percentages are calculated consistently and displayed with a defined rounding rule (one decimal place per **ADR-0007**).
+  - Percentages are calculated consistently and displayed to **one decimal place** (confirmed by CTO, 2026-11-09; per **ADR-0007**).
   - Results refresh/presentation behavior is handled by the UI (Next.js public app) while the poll is open and results are visible (proposed: every ~5 seconds, with reasonable error handling/backoff). After close, polling stops or becomes unnecessary.
   - Open polls do not expose results to non-voters before voting.
 
@@ -186,9 +186,9 @@ As the admin, I want to close a poll before expiry.
 
 ### Expiry
 - Optional expiry date selected by admin.
-- Interpreted in `APP_TIMEZONE`; closes at `23:59:59` in `APP_TIMEZONE` on selected date.
+- Interpreted in `APP_TIMEZONE` = **Asia/Kolkata (IST)**; closes at `23:59:59` IST on the selected date (confirmed by CTO, 2026-11-09).
 - Server is source of truth; canonical `expires_at` stored/enforced server-side.
-- UI shows expiry with timezone.
+- UI shows expiry in **IST** on both public and admin surfaces.
 
 ### Vote Integrity (MVP)
 - No voter login.
@@ -280,7 +280,7 @@ Review metrics 2 weeks post-launch and revise for the actual operating model.
 |---|---|---|
 | Single-admin credential compromise gives full poll control. | Open | Strong password/hash, HTTPS, throttling, minimal attack surface, secure provisioning/recovery. CTO/Surya. |
 | `mini-poll-id` cookie dedup allows new-browser/no-cookie re-votes. | Accepted MVP limitation | Explicit behavior; idempotent same-cookie handling; 100/min rate limit. PO/CTO. |
-| `APP_TIMEZONE`/DST/server-time configuration errors can close polls unexpectedly. | Open | Use explicit configured timezone, store canonical expiry, add timezone-aware tests. CTO/Surya/QA. |
+| `APP_TIMEZONE`/DST/server-time configuration errors can close polls unexpectedly. | Mitigated | `APP_TIMEZONE` pinned to Asia/Kolkata (confirmed); store canonical expiry; add timezone-aware tests. Surya/QA. |
 | Next.js + Laravel + Filament across subdomains creates CORS/CSRF/cookie complexity. | Open | Resolve in Phase 0 architecture; document contracts and security controls. CTO. |
 | Public poll slug/share URL may be guessable/enumerable depending on format. | Accepted (MVP) | Human-readable `Str::slug` slugs confirmed by CTO (ADR-0002); enumeration mitigated by 100/min per-IP rate limiting (ADR-0004); revisit for sensitive polls in v1. |
 | Abuse/spam of public vote endpoint. | Open | Rate-limit by IP/token/poll; monitoring; consider CAPTCHA/post-MVP controls only if approved. Surya/CTO. |

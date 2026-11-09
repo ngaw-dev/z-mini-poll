@@ -3,7 +3,7 @@
 - **Status:** Accepted (provisional CTO defaults, 2026-11-09)
 - **Date:** 2026-11-09
 - **Deciders:** CTO (provisional defaults approved for Phase 0 planning)
-- **Confirmed items (CTO, 2026-11-09):** same-site `/api/v1` proxy through `mini-poll.com`; case-sensitive duplicate-option-text rejection (remainder of this ADR stays provisional pending Phase 0)
+- **Confirmed items (CTO, 2026-11-09):** same-site `/api/v1` proxy through `mini-poll.com`; case-sensitive duplicate-option-text rejection; **one-decimal percentage rounding** (remainder of this ADR stays provisional pending Phase 0)
 
 ## Context
 Separate Next.js/Laravel apps and subdomains require CORS/cookie boundary decisions. Duplicate-option validation and percentage rounding were also marked for confirmation.
@@ -17,7 +17,7 @@ Separate Next.js/Laravel apps and subdomains require CORS/cookie boundary decisi
 
 **Validation/presentation defaults (provisional):**
 - **Duplicate option text:** after trimming whitespace, reject options whose text is identical (case-sensitive comparison) with a clear validation error. **Confirmed by CTO, 2026-11-09.**
-- **Percentage rounding:** display percentages to **one decimal place** (e.g., `33.3%`). Visual bars use raw proportions. Rounded values may not sum to exactly 100%; UI should not imply false precision.
+- **Percentage rounding:** display percentages to **one decimal place** (e.g., `33.3%`). Visual bars use raw proportions. Rounded values may not sum to exactly 100%; UI should not imply false precision. **Confirmed by CTO, 2026-11-09.**
 
 ## Consequences
 - Same-site `/api/v1` proxy minimizes cross-origin cookie complexity (confirmed); remaining work is hosting/reverse-proxy configuration.

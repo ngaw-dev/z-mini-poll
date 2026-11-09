@@ -4,6 +4,7 @@
 - **Date:** 2026-11-09
 - **Deciders:** CTO (provisional defaults approved for Phase 0 planning)
 - **Confirmed item (CTO, 2026-11-09):** same-site public API origin `https://mini-poll.com/api/v1` via reverse proxy (remainder of this ADR stays provisional pending Phase 0)
+- **Confirmed item (CTO, 2026-11-09):** `APP_TIMEZONE = Asia/Kolkata` — canonical timezone for poll expiry interpretation (`23:59:59` IST boundary on the selected date); admin and public UIs display expiry in **IST**
 
 ## Context
 The PRD requires separate frontend and backend applications: Next.js public UI (`mini-poll.com`), Laravel backend APIs, and Laravel+Filament admin (`admin.mini-poll.com`). The repo is currently a single repository and deployment topology (service split, reverse proxy, local dev) was undecided.
