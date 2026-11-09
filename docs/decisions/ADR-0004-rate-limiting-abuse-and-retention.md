@@ -3,12 +3,13 @@
 - **Status:** Accepted (provisional CTO defaults, 2026-11-09)
 - **Date:** 2026-11-09
 - **Deciders:** CTO (provisional defaults approved for Phase 0 planning)
+- **Confirmed items (CTO, 2026-11-09):** rate limit of 100 requests/minute **per client IP** across public `/api/v1/*` endpoints, with 429 + `Retry-After` response (remainder of this ADR stays provisional pending Phase 0)
 
 ## Context
 The PRD set a 100 requests/minute rate limit but did not define scope. Public no-login endpoints are abuse-prone. IP-hash/privacy design and retention were open.
 
 ## Decision
-- **Primary limit:** **100 requests per minute per client IP** for public `/api/v1/*` endpoints (poll fetch, vote submit, results-as-allowed). Apply at reverse proxy and/or Laravel throttle middleware (defense in depth) — Phase 0 picks authoritative layer.
+- **Primary limit (confirmed by CTO, 2026-11-09):** **100 requests per minute per client IP** for public `/api/v1/*` endpoints (poll fetch, vote submit, results-as-allowed), applied across the group. Reverse proxy and/or Laravel throttle middleware may both enforce it (defense in depth) — Phase 0 picks the authoritative layer.
 - **Response on limit:** HTTP **429 Too Many Requests** with `Retry-After` header and JSON body:
   ```json
   { "error": { "code": "rate_limited", "message": "Too many requests. Please try again later." } }
