@@ -79,7 +79,7 @@ As the single admin, I want to access `admin.mini-poll.com` so I can manage poll
   - Authenticated admin lands on the poll management dashboard.
   - Public users cannot access admin routes.
   - Filament/application logging is acceptable for operational visibility; no separate admin audit trail is required beyond standard application/infrastructure logs.
-  - **[CTO confirm]** password reset/recovery posture, login throttling, and session hardening details.
+  - Password reset/recovery posture, login throttling, and session hardening are decided in **ADR-0006**.
 
 **US 1.2 — Admin can sign out**
 - Acceptance:
@@ -94,10 +94,10 @@ As the admin, I want to create a poll with a question and 2–6 options.
   - Question is required; after trimming whitespace, length is 5–200 characters.
   - Minimum 2 options, maximum 6 options.
   - Each option is required; after trimming whitespace, length is 1–80 characters.
-  - Duplicate option text after trimming is rejected with a clear validation error **[PO confirm; recommended]**.
+  - Duplicate option text after trimming is rejected with a clear validation error (default per **ADR-0007**).
   - Option order is preserved as entered.
   - **Filament manages form validation** for admin create/edit flows; backend/database enforce business rules and integrity.
-  - On submit, the system generates a unique poll identifier and slug; **slug uniqueness is enforced at DB level**. **[CTO/PO confirm slug format/charset/collision strategy]**
+  - On submit, the system generates a unique poll identifier and slug; **slug uniqueness is enforced at DB level** (format/entropy/collision per **ADR-0002**).
   - Admin sees the created poll with its canonical public share URL: `https://mini-poll.com/p/{slug}` (proposed).
   - Poll is created in **Open** state unless/until expired or manually closed.
 
@@ -125,7 +125,7 @@ As anyone with the public link, I want to vote once from my current browser/sess
 **US 3.2 — Deduplication and revote behavior (MVP)**
 - Acceptance:
   - Backend issues/uses voter token cookie **`mini-poll-id`** for anonymous dedup: **HttpOnly, 24-hour expiry**. **Do not use localStorage** for voter dedup.
-  - Cookie attributes must be defined explicitly for `mini-poll.com` (e.g., `Secure`, `SameSite`, `Path`, `Domain` as appropriate) **[CTO decision required]**.
+  - Cookie attributes for `mini-poll.com` are defined in **ADR-0003**.
   - If the same valid `mini-poll-id` token submits again for the same poll, the request is handled **idempotently**: no additional vote is counted; API returns an appropriate non-counting response/state.
   - If the request is from a **new browser** or **no `mini-poll-id` cookie is present**, a new vote may be accepted (known MVP limitation, not a defect).
   - Vote recording/count updates are atomic under concurrent requests.
@@ -136,7 +136,7 @@ As a voter (after voting) or any viewer of a closed poll, I want to see current 
 - Acceptance:
   - Results show each option with vote count, percentage, and a visual bar.
   - Total vote count is displayed.
-  - Percentages are calculated consistently and displayed with a defined rounding rule (e.g., whole percent or one decimal; UI handles rounding sum). **[CTO/PO confirm]**
+  - Percentages are calculated consistently and displayed with a defined rounding rule (one decimal place per **ADR-0007**).
   - Results refresh/presentation behavior is handled by the UI (Next.js public app) while the poll is open and results are visible (proposed: every ~5 seconds, with reasonable error handling/backoff). After close, polling stops or becomes unnecessary.
   - Open polls do not expose results to non-voters before voting.
 
@@ -165,17 +165,17 @@ As the admin, I want to close a poll before expiry.
 - Public: `https://mini-poll.com` — Next.js.
 - Admin: `https://admin.mini-poll.com` — Laravel + Filament.
 - Backend: Laravel application/services providing public APIs and admin/Filament functionality.
-- Deployment target includes a **Docker image** for the application stack as decided by CTO. **[CTO decision required]** exact service split (Laravel app serving Filament + API; Next.js app; reverse proxy/routing), image boundaries, compose/k8s/runtime, API base URLs, CORS allowed origins, HTTPS/TLS, staging domains.
+- Deployment target includes a **Docker image** for the application stack; repo layout, service split, and deployment topology are decided in **ADR-0001**.
 
 ### Authentication & Authorization
 - No authentication for public voting/viewing.
 - Single admin account only; admin created via command line; no admin-creation API required. Filament provides admin auth/dashboard access.
 - All admin routes require authenticated admin access.
-- **[CTO decision required]** password reset/recovery posture, session hardening, CSRF details where applicable, login throttling, and secrets/config management.
+- Password reset/recovery posture, session hardening, CSRF details, login throttling, and secrets/config management are decided in **ADR-0006**.
 
 ### Public Share URL & Slug
 - Canonical public URL (proposed): `https://mini-poll.com/p/{slug}`.
-- Slug/identifier must be unique; **uniqueness enforced at DB level**. **[CTO/PO confirm]** slug generation rules, length/charset, collision handling, mutability, and whether IDs/slugs are guessable.
+- Slug/identifier must be unique; **uniqueness enforced at DB level**. Generation rules, length/charset, collision handling, mutability, and guessability posture are decided in **ADR-0002**.
 - Invalid slug returns a clear not-found state.
 - Copy action copies the absolute canonical URL.
 
@@ -196,15 +196,15 @@ As the admin, I want to close a poll before expiry.
 - New browser/missing cookie may submit again — accepted MVP limitation.
 - Duplicate same-token submission for same poll is idempotent (no double count).
 - Atomic vote recording under concurrency.
-- **[CTO decision required]** IP/rate-limit abuse controls, optional IP-hash/privacy design if used, retention.
+- IP/rate-limit abuse controls, IP-hash/privacy design, and retention posture are decided in **ADR-0004**.
 
 ### API Contract
 - Public-facing API routes are under **`/api/v1/`**.
-- **Rate limit:** 100 requests per minute (scope to be defined precisely: per IP, per endpoint group, and/or per token — **[CTO confirm]**).
+- **Rate limit:** 100 requests per minute (scope and response shape per **ADR-0004**).
 - **Public endpoints** (e.g., `/api/v1/polls/{slug}`, vote submit, results as allowed): accessible without voter login; protected by rate limiting, validation, `mini-poll-id` dedup/idempotency, and server-side visibility rules. **No end-user auth tokens required/exposed** for public voting.
 - **App-level/backend or privileged API calls** (if any): auth tokens are stored **server-side/config only and never exposed to browsers**.
 - **Admin management:** handled via Filament web/admin auth on `admin.mini-poll.com`, not a public admin API.
-- **[CTO decision required]** finalize endpoint list, request/response schemas, validation errors, 401/403/404/409/429 behaviors, idempotency responses, and token scope.
+- Endpoint list, request/response schemas, validation errors, 401/403/404/409/429 behaviors, idempotency responses, and token scope are decided provisionally in **ADR-0005**.
 
 ### Responsive UI & Accessibility
 - Public UI mobile-first; works down to 360px wide.
@@ -307,7 +307,7 @@ Review metrics 2 weeks post-launch and revise for the actual operating model.
 ## 11. Acceptance Checklist Before Development
 
 - [x] PO approves this revised PRD scope (admin-only, single admin, domains, voter rules).
-- [ ] CTO approves architecture: Laravel + Filament + Next.js topology, Docker deployment split, `/api/v1/` contract, Filament auth, dedup cookie/local-storage clarification (`mini-poll-id`, HttpOnly, 24h), app-level token scope for public vs privileged APIs, `APP_TIMEZONE` expiry, slug format, 100/min rate-limit scope, deployment/secrets.
+- [ ] CTO ratifies provisional architecture defaults (ADRs 0001–0007): repo/Docker topology, `/api/v1/` contract, Filament auth, `mini-poll-id` cookie, app-level token scope, `APP_TIMEZONE` expiry, slug format, 100/min rate-limit scope, secrets.
 - [ ] Prashant/Surya agree frontend-backend API contract and error shapes.
 - [ ] Charu provides design direction for public poll UI and/or Filament customization needs (if any).
 - [ ] Mohan converts acceptance criteria into executable test cases (including dedup idempotency, expiry boundary, results visibility, rate limits).
