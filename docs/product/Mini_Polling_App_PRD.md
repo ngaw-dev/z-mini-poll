@@ -97,7 +97,7 @@ As the admin, I want to create a poll with a question and 2–6 options.
   - Duplicate option text after trimming is rejected with a clear validation error (default per **ADR-0007**).
   - Option order is preserved as entered.
   - **Filament manages form validation** for admin create/edit flows; backend/database enforce business rules and integrity.
-  - On submit, the system generates a unique poll identifier and slug; **slug uniqueness is enforced at DB level** (format/entropy/collision per **ADR-0002**).
+  - On submit, the system generates a unique poll identifier and slug; **slug uniqueness is enforced at DB level** (Laravel `Str::slug` of the question; DB existence check; `mmdd` date suffix on collision — per **ADR-0002**).
   - Admin sees the created poll with its canonical public share URL: `https://mini-poll.com/p/{slug}` (proposed).
   - Poll is created in **Open** state unless/until expired or manually closed.
 
@@ -175,7 +175,7 @@ As the admin, I want to close a poll before expiry.
 
 ### Public Share URL & Slug
 - Canonical public URL (proposed): `https://mini-poll.com/p/{slug}`.
-- Slug/identifier must be unique; **uniqueness enforced at DB level**. Generation rules, length/charset, collision handling, mutability, and guessability posture are decided in **ADR-0002**.
+- Slug/identifier must be unique; **uniqueness enforced at DB level**. Generation uses Laravel `Str::slug` from the question, with a DB existence check and a `mmdd` date suffix on collision; mutability and guessability posture are decided in **ADR-0002**.
 - Invalid slug returns a clear not-found state.
 - Copy action copies the absolute canonical URL.
 
@@ -282,7 +282,7 @@ Review metrics 2 weeks post-launch and revise for the actual operating model.
 | `mini-poll-id` cookie dedup allows new-browser/no-cookie re-votes. | Accepted MVP limitation | Explicit behavior; idempotent same-cookie handling; 100/min rate limit. PO/CTO. |
 | `APP_TIMEZONE`/DST/server-time configuration errors can close polls unexpectedly. | Open | Use explicit configured timezone, store canonical expiry, add timezone-aware tests. CTO/Surya/QA. |
 | Next.js + Laravel + Filament across subdomains creates CORS/CSRF/cookie complexity. | Open | Resolve in Phase 0 architecture; document contracts and security controls. CTO. |
-| Public poll slug/share URL may be guessable/enumerable depending on format. | Open | Choose slug/ID entropy policy; DB-unique slug; 100/min rate limiting; decide privacy posture. CTO/PO. |
+| Public poll slug/share URL may be guessable/enumerable depending on format. | Accepted (MVP) | Human-readable `Str::slug` slugs confirmed by CTO (ADR-0002); enumeration mitigated by 100/min per-IP rate limiting (ADR-0004); revisit for sensitive polls in v1. |
 | Abuse/spam of public vote endpoint. | Open | Rate-limit by IP/token/poll; monitoring; consider CAPTCHA/post-MVP controls only if approved. Surya/CTO. |
 | Data retention/privacy (polls, votes, tokens, logs). | Open | Define retention and privacy posture before launch; avoid storing unnecessary PII. PO/CTO. |
 | Name/domain/branding finalization. | Open | Product/design input before launch. PO/Charu. |
