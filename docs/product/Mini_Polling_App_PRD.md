@@ -204,7 +204,7 @@ As the admin, I want to close a poll before expiry.
 - **Public endpoints** (e.g., `/api/v1/polls/{slug}`, vote submit, results as allowed): accessible without voter login; protected by rate limiting, validation, `mini-poll-id` dedup/idempotency, and server-side visibility rules. **No end-user auth tokens required/exposed** for public voting.
 - **App-level/backend or privileged API calls** (if any): auth tokens are stored **server-side/config only and never exposed to browsers**.
 - **Admin management:** handled via Filament web/admin auth on `admin.mini-poll.com`, not a public admin API.
-- Endpoint list, request/response schemas, validation errors, 401/403/404/409/429 behaviors, idempotency responses, and token scope are decided provisionally in **ADR-0005**.
+- Endpoint list, request/response schemas, validation errors, 401/403/404/409/429 behaviors, idempotency responses, and token scope are decided provisionally in **ADR-0005**, which follows the my-brain (mimir) API request/response conventions (`ApiResponse` envelope + typed JS API layer).
 
 ### Responsive UI & Accessibility
 - Public UI mobile-first; works down to 360px wide.

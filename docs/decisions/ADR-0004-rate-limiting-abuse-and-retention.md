@@ -10,9 +10,9 @@ The PRD set a 100 requests/minute rate limit but did not define scope. Public no
 
 ## Decision
 - **Primary limit (confirmed by CTO, 2026-11-09):** **100 requests per minute per client IP** for public `/api/v1/*` endpoints (poll fetch, vote submit, results-as-allowed), applied across the group. Reverse proxy and/or Laravel throttle middleware may both enforce it (defense in depth) — Phase 0 picks the authoritative layer.
-- **Response on limit:** HTTP **429 Too Many Requests** with `Retry-After` header and JSON body:
+- **Response on limit:** HTTP **429 Too Many Requests** with `Retry-After` header and JSON body using the ApiResponse envelope (ADR-0005):
   ```json
-  { "error": { "code": "rate_limited", "message": "Too many requests. Please try again later." } }
+  { "success": false, "message": "Easy there — you're going a bit too fast", "errors": { "error": "rate_limited" } }
   ```
 - **Admin/Filament:** rely on Filament/Laravel auth throttling and standard web protections; not covered by the public 100/min `/api/v1/` rule.
 - **IP/privacy (provisional):** do not add application-level IP-hash dedup in MVP beyond rate limiting/infrastructure controls. If IP data is processed for abuse control, minimize it and follow infrastructure log retention defaults. No voter PII is collected by design.
